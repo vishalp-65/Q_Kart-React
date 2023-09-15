@@ -11,11 +11,17 @@ import "./Login.css";
 
 const Login = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  });
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+  };
+  const [isLoading, setIsLoading] = useState(false);
+  const history = useHistory();
 
-  /**
-   * Perform the Login API call
-   * @param {{ username: string, password: string }} formData
-   *  Object with values of username, password and confirm password user entered to register
+    /*password and confirm password user entered to register
    *
    * API endpoint - "POST /auth/login"
    *
@@ -37,6 +43,37 @@ const Login = () => {
    *
    */
   const login = async (formData) => {
+    try{
+      setIsLoading(true);
+      // console.log("formData", formData);
+      const response = await axios.post(`${config.endpoint}/auth/login`, formData);
+
+      setFormData({
+        username: "",
+        password: ""
+      });
+
+      persistLogin(
+        response.data.token,
+        response.data.username,
+        response.data.balance
+      )
+      const { success } = response.data;
+
+      if (success) {
+        enqueueSnackbar("Logged in successfully", { variant: "success" });
+      }
+      history.push("/");
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        enqueueSnackbar(error.response.data.message, { variant: "error" });
+      } else {
+        enqueueSnackbar("Error occurred while login", { variant: "error" });
+      }
+    }
+    finally{
+      setIsLoading(false);
+    }
   };
 
   /**
@@ -53,25 +90,41 @@ const Login = () => {
    * -    Check that username field is not an empty value - "Username is a required field"
    * -    Check that password field is not an empty value - "Password is a required field"
    */
-  const validateInput = (data) => {
+
+   const handleSubmit = (event) => {
+    event.preventDefault();
+    if (validateInput(formData)) {
+      const userData = {
+        username : formData.username,
+        password: formData.password
+      };
+      // console.log("formData1", formData);
+      login(userData);
+      // console.log("formData2", formData);
+    }
   };
 
-  /**
-   * Store the login information so that it can be used to identify the user in subsequent API calls
-   *
-   * @param {string} token
-   *    API token used for authentication of requests after logging in
-   * @param {string} username
-   *    Username of the logged in user
-   * @param {string} balance
-   *    Wallet balance amount of the logged in user
-   *
-   * Make use of localStorage: https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
-   * -    `token` field in localStorage can be used to store the Oauth token
-   * -    `username` field in localStorage can be used to store the username that the user is logged in as
-   * -    `balance` field in localStorage can be used to store the balance amount in the user's wallet
-   */
+
+  const validateInput = (data) => {
+    // console.log("formData3", formData);
+    if (!data.username) {
+      enqueueSnackbar("Username is a required field", { variant: "error" });
+      return false;
+    }
+
+    // Check that password field is not empty
+    if (!data.password) {
+      enqueueSnackbar("Password is a required field", { variant: "error" });
+      return false;
+    }
+    return true;
+  };
+
+
   const persistLogin = (token, username, balance) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("username", username);
+    localStorage.setItem("balance", balance);
   };
 
   return (
@@ -84,6 +137,41 @@ const Login = () => {
       <Header hasHiddenAuthButtons />
       <Box className="content">
         <Stack spacing={2} className="form">
+        <h2 className="title">Login</h2>
+          <TextField
+            id="username"
+            label="Username"
+            variant="outlined"
+            title="User name"
+            name="username"
+            placeholder="Enter Username"
+            fullWidth
+            value={formData.username}
+            onChange={handleChange}
+          />
+          <TextField
+            id="password"
+            variant="outlined"
+            label="Password"
+            name="password"
+            type="password"
+            fullWidth
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={handleChange}
+          />
+           {isLoading ? (<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <CircularProgress />
+            </Box>):
+            (<Button className="button" variant="contained" onClick={handleSubmit}>
+            LOGIN TO QKART
+           </Button>)}
+          <p className="secondary-action">
+            Don't have an account?{" "}
+             <Link className="link" to="/register">
+              Register now
+             </Link>
+          </p>
         </Stack>
       </Box>
       <Footer />
