@@ -30,7 +30,7 @@ const Login = () => {
    * {
    *      "success": true,
    *      "token": "testtoken",
-   *      "username": "criodo",
+   *      "username": "vishal",
    *      "balance": 5000
    * }
    *

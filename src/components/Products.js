@@ -17,12 +17,10 @@ import ProductCard from "./ProductCard";
 import "./Products.css";
 import Cart, { generateCartItemsFrom } from "./Cart";
 
-
 const Products = () => {
-
   const [items, setItems] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [products, setProductsData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [debounceTimeout, setDebounceTimerout] = useState(0);
@@ -67,7 +65,7 @@ const Products = () => {
    * }
    */
   const performAPICall = async () => {
-    try{
+    try {
       setIsLoading(true);
       const url = `${config.endpoint}/products`;
       const res = await axios.get(url);
@@ -75,44 +73,38 @@ const Products = () => {
       setProductsData(productList);
       setFilterProduct(productList);
       return res.data;
-    }
-    catch(e){
-      if(e.data && e.response.status === 500){
+    } catch (e) {
+      if (e.data && e.response.status === 500) {
         enqueueSnackbar(e.data.message, { variant: "error" });
-      }
-      else{
+      } else {
         enqueueSnackbar("Error occurred while login", { variant: "error" });
       }
       return null;
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
 
-  
-   /* API endpoint - "GET /products/search?value=<search-query>"
+  /* API endpoint - "GET /products/search?value=<search-query>"
    *
    */
 
   const performSearch = async (text) => {
-    try{
+    try {
       let url = `${config.endpoint}/products/search?value=${text}`;
 
       const res = await axios.get(url);
       setFilterProduct(res.data);
-    }
-    catch(e){
-      if(e.response){
-        if(e.response.status === 404){
+    } catch (e) {
+      if (e.response) {
+        if (e.response.status === 404) {
           setFilterProduct([]);
         }
-        if(e.response.status === 500){
+        if (e.response.status === 500) {
           enqueueSnackbar(e.data.message, { variant: "error" });
           setFilterProduct(products);
         }
-      }
-      else{
+      } else {
         enqueueSnackbar("Error occurred", { variant: "error" });
       }
     }
@@ -124,22 +116,20 @@ const Products = () => {
    *
    */
   const debounceSearch = (event, debounceTimeout) => {
-
     const searchValue = event.target.value;
 
-    if(debounceTimeout){
+    if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
 
-    const timeout = setTimeout (() =>{
+    const timeout = setTimeout(() => {
       performSearch(searchValue);
     }, 500);
 
     setDebounceTimerout(timeout);
   };
 
-
-  useEffect(() =>{
+  useEffect(() => {
     const onLoadHandler = async () => {
       const productsData = await performAPICall();
       const cartData = await fetchCart(token);
@@ -148,7 +138,6 @@ const Products = () => {
     };
     onLoadHandler();
   }, []);
-
 
   /**
    * Example for successful response from backend:
@@ -175,15 +164,13 @@ const Products = () => {
     if (!token) return;
 
     try {
-
       const url = `${config.endpoint}/cart`;
       const response = await axios.get(url, {
-        headers:{
-          Authorization : `Bearer ${token}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
       return response.data;
-
     } catch (e) {
       if (e.response && e.response.status === 401) {
         enqueueSnackbar(e.response.data.message, { variant: "error" });
@@ -199,15 +186,12 @@ const Products = () => {
     }
   };
 
-
-
   const isItemInCart = (items, productId) => {
-    if(items){
+    if (items) {
       return items.findIndex((item) => item.productId === productId) !== -1;
     }
   };
 
-  
   /* Example for successful response from backend:
    * HTTP 200 - Updated list of cart items
    * [
@@ -236,43 +220,41 @@ const Products = () => {
     qty,
     options = { preventDuplicate: false }
   ) => {
-    if(!token) {
-      enqueueSnackbar(
-        "Login to add an item to the cart",
-        {variant : "warning"}
-      );
+    if (!token) {
+      enqueueSnackbar("Login to add an item to the cart", {
+        variant: "warning",
+      });
       return;
     }
 
-    if(options.preventDuplicate && isItemInCart(items, productId)){
+    if (options.preventDuplicate && isItemInCart(items, productId)) {
       enqueueSnackbar(
         "Item already in cart. Use the cart slidebar to update quantity or remove item.",
         {
-          variant : "warning"
+          variant: "warning",
         }
       );
       return;
     }
 
-    try{
-      const response = await axios.post(`${config.endpoint}/cart`,
-        {productId, qty},
+    try {
+      const response = await axios.post(
+        `${config.endpoint}/cart`,
+        { productId, qty },
         {
           headers: {
-            Authorization : `Bearer ${token}`,
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       const cartItems = generateCartItemsFrom(response.data, products);
       setItems(cartItems);
-    }
-    catch(e){
-      console.error(e)
-      if(e.response){
-        enqueueSnackbar(e.response.data.message, {variant : "error"});
-      }
-      else{
+    } catch (e) {
+      console.error(e);
+      if (e.response) {
+        enqueueSnackbar(e.response.data.message, { variant: "error" });
+      } else {
         enqueueSnackbar(
           "Could not fetch cart details. Check that the backend is running, reachable and returns valid JSON.",
           {
@@ -283,16 +265,14 @@ const Products = () => {
     }
   };
 
-
   return (
     <div>
       <Header>
-
         <TextField
           className="search-desktop"
           size="small"
           InputProps={{
-            className :"search",
+            className: "search",
             endAdornment: (
               <InputAdornment position="end">
                 <Search color="primary" />
@@ -301,88 +281,82 @@ const Products = () => {
           }}
           placeholder="Search for items/categories"
           name="search"
-          onChange= {(e)=> debounceSearch(e,debounceTimeout)}
+          onChange={(e) => debounceSearch(e, debounceTimeout)}
         />
       </Header>
 
       <TextField
-          className="search-mobile"
-          size="small"
-          fullWidth
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <Search color="primary" />
-              </InputAdornment>
-            ),
-          }}
-          placeholder="Search for items/categories"
-          name="search"
-          onChange= {(e)=> debounceSearch(e,debounceTimeout)}
-        />
+        className="search-mobile"
+        size="small"
+        fullWidth
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <Search color="primary" />
+            </InputAdornment>
+          ),
+        }}
+        placeholder="Search for items/categories"
+        name="search"
+        onChange={(e) => debounceSearch(e, debounceTimeout)}
+      />
 
       {/* Search view for mobiles */}
-       <Grid container>
-         <Grid 
-            item 
-            xs = {12}
-            md = {token && products.length ? 9 : 12}
-            className="product-grid"
-          >
-           <Box className="hero">
-             <p className="hero-heading">
-               India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
-               to your door step
-             </p>
-           </Box>
-            {isLoading ? (<Stack display="flex" justifyContent="center">
+      <Grid container>
+        <Grid
+          item
+          xs={12}
+          md={token && products.length ? 9 : 12}
+          className="product-grid"
+        >
+          <Box className="hero">
+            <p className="hero-heading">
+              India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
+              to your door step
+            </p>
+          </Box>
+          {isLoading ? (
+            <Stack display="flex" justifyContent="center">
               <CircularProgress />
               <p>Loading Products...</p>
-            </Stack>):
-            (
-              <Grid container marginY="1rem" paddingX="1rem" spacing = {2}>
-                {filterProducts.length ? (
-                  filterProducts.map((data) => (  
-                    <Grid item key={data._id} xs={12} sm={6} md={4} lg={3}>
-                      <ProductCard 
-                        product ={data} 
-                        handleAddToCart = {async () =>{
-                          await addToCart(
-                            token,
-                            items,
-                            products,
-                            data._id,
-                            1,
-                            {
-                              preventDuplicate: true,
-                            }
-                          );
-                        }}
-                      />
-                    </Grid>
-                  ))):(
-                    <Box className= "loading">
-                      <SentimentDissatisfied color = "action" />
-                      <h4 style = {{color:"#636363"}}>No products found</h4>
-                    </Box>
-                  )
-                }
-              </Grid>)}
-         </Grid>
+            </Stack>
+          ) : (
+            <Grid container marginY="1rem" paddingX="1rem" spacing={2}>
+              {filterProducts.length ? (
+                filterProducts.map((data) => (
+                  <Grid item key={data._id} xs={12} sm={6} md={4} lg={3}>
+                    <ProductCard
+                      product={data}
+                      handleAddToCart={async () => {
+                        await addToCart(token, items, products, data._id, 1, {
+                          preventDuplicate: true,
+                        });
+                      }}
+                    />
+                  </Grid>
+                ))
+              ) : (
+                <Box className="loading">
+                  <SentimentDissatisfied color="action" />
+                  <h4 style={{ color: "#636363" }}>No products found</h4>
+                </Box>
+              )}
+            </Grid>
+          )}
+        </Grid>
 
-         {token  && (
-          <Grid item xs ={12} md = {3} bgcolor ="#E9F5S1">
+        {token && (
+          <Grid item xs={12} md={3} bgcolor="#E9F5S1">
             <Cart
               hasCheckOutButton
-              products = {products}
-              items = {items}
-              handleQuantity = {addToCart}
-              isReadOnly = {false}
+              products={products}
+              items={items}
+              handleQuantity={addToCart}
+              isReadOnly={false}
             />
-          </ Grid>
-         )}
-
-       </Grid>
+          </Grid>
+        )}
+      </Grid>
 
       <TextField
         className="search-mobile"
